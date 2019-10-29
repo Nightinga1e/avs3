@@ -23,31 +23,6 @@ static __inline__ TimeVal getticks()
 	asm volatile ("rdtsc" : "=a" (a), "=d" (d));
 	return (((TimeVal)a) | (((TimeVal) d) << 32));
 }
-/*
-unsigned long long time_RDTSC()
-{	union ticks
-	{
-		unsigned long long tx;
-		struct dblword{ long tl,th; } dw;
-	}t;
-	asm("rdtsc\n": "=a" (t.dw.tl),"=d"(t.dw.th));
-	return t.tx;
-}
-void time_startTSC() {TimeValue=time_RDTSC();}
-long long time_stopTSC(){return time_RDTSC() - TimeValue;}
-*/
-/*
-
-void tsc(long n)
-{
-
-tick = getticks(); //tsc
-for(int i = 0; i < n; i++)
-exp_(1500.);
-tick1 = getticks(); //tsc_reg
-time = (unsigned)((tick1 - tick) / 1991989);
-printf("%lf\n", time / 1000.);
-}*/
 
 void time_start() { gettimeofday(&tv1, &tz); }
 
@@ -70,15 +45,15 @@ double F(double x)
 	return f;
 }
 
-double Sim_clock(int iter)
+double Sim_clock(int iter, double A, double B)
 {
 	const double Pi = 3.14159;
 	double S, x, a, b, h;
 	int i = 0;
 	while(i<iter){
 		S = 0;
-		a = 0;
-		b = Pi;
+		a = A;
+		b = B;
 		h = (b-a)/N;
 		x = a+h;
 		while (x<b)
@@ -97,31 +72,63 @@ double Sim_clock(int iter)
 
 int main(){
 	int iter = 0;
-	double result = 0;
+	double A=0;
+	double B=0;
+	double resultt=0;
+	double result[3];
+	for(int i=0; i<3; i++){result[i]=0;};
 	double timeresult_clock = 0;
 	double timeresult_gettime = 0;
 	double timeresult_TSC = 0;
-	scanf("%d", &iter);
+	scanf("%d %lf %lf", &iter, &A, &B);
 //-------------------------------------------------------------
-	start = clock();
-	result = Sim_clock(iter);
-	stop = clock();
-	printf("\n%6.10f\n", result);
-	timeresult_clock = (double)(stop-start)/CLOCKS_PER_SEC ;
-	printf("\ntimeresult_clock = %6.10f \n", timeresult_clock);
+	printf("\nA=%lf B=%lf\n", A, B);
+	printf("\n-----------------------------------------\n");
+	for(int i=0;i<3;i++){
+	  printf("\ni = %d\n",i);
+	  start = clock();
+	  resultt = Sim_clock(iter,A,B);
+	  stop = clock();
+	  printf("\nresult = %6.10lf\n", resultt);
+	  timeresult_clock = (double)(stop-start)/CLOCKS_PER_SEC ;
+	  result[i] = timeresult_clock;
+	  printf("\ntimeresult_clock = %6.10lf \n", timeresult_clock);
+	}
+	
+	printf("\nAb = %lf\n", abs((result[0]+result[1]+result[2])/3-result[1]));
+	  printf("\nOtn = %lf\n",result[1]/((result[0]+result[1]+result[2])/3));
+	printf("\n-----------------------------------------\n");
 //--------------------------------------------------------------
-	time_start();
-	result = Sim_clock(iter);
-	timeresult_gettime =(double)time_stop() / 1000;
-	printf("\n%6.10f\n", result);
-	printf("\ntimeresult_gettime = %6.10f \n", timeresult_gettime);
+	printf("\n-----------------------------------------\n");
+	for(int i=0;i<3;i++){
+	  printf("\ni = %d\n",i);
+	  time_start();
+	  resultt = Sim_clock(iter,A,B);
+	  timeresult_gettime =(double)time_stop() / 1000;
+	  result[i]=timeresult_gettime;
+	  printf("\nresult = %6.10lf\n", resultt);
+	  printf("\ntimeresult_gettime = %6.10lf \n", timeresult_gettime);
+	}
+	
+	printf("\nAb = %lf\n", abs((result[0]+result[1]+result[2])/3-result[1]));
+	  printf("\nOtn = %lf\n",result[1]/((result[0]+result[1]+result[2])/3));
+	printf("\n-----------------------------------------\n");
 //---------------------------------------------------------------------
-	tick = getticks();
-	result = Sim_clock(iter);
-	tick1 = getticks();
-	ttime = (unsigned)((tick1 - tick) / 3193998);
-	printf("\n%6.10f\n", result);
-	printf("\ntimeresult_TSC = %6.10lf \n", ttime / 1000.);
+	printf("\n-----------------------------------------\n");
+	for(int i=0;i<3;i++){
+	  printf("\ni = %d\n",i);
+	  tick = getticks();
+	  resultt = Sim_clock(iter,A,B);
+	  tick1 = getticks();
+	  ttime = (unsigned)((tick1 - tick) / 3193998);
+	  result[i]=ttime/1000.;
+	  printf("\nresult = %6.10lf\n", resultt);
+	  printf("\ntimeresult_TSC = %6.10lf \n", ttime / 1000.);
+	}
+	
+	printf("\nAb = %lf\n", abs((result[0]+result[1]+result[2])/3-result[1]));
+	  printf("\nOtn = %lf\n",result[1]/((result[0]+result[1]+result[2])/3));
+	printf("\n-----------------------------------------\n");
 //---------------------------------------------------------------------
 	return 0;
 }
